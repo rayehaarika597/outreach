@@ -1,0 +1,41 @@
+{
+  "Company Profile": {
+    "Company Id": "microsoft",
+    "Company Name": "Microsoft",
+    "Company Website": "https://news.microsoft.com/",
+    "Company Linkedin Url": "https://www.linkedin.com/company/microsoft",
+    "Company Headquarters": "Redmond, Washington",
+    "About the company": "Every company has a mission. What's ours? To empower every person and every organization to achieve more. We believe technology can and should be a force for good and that meaningful innovation contributes to a brighter world in the future and today. Our culture doesn\u2019t just encourage curiosity; it embraces it. Each day we make progress together by showing up as our authentic selves. We show up with a learn-it-all mentality. We show up cheering on others, knowing their success doesn't diminish our own. We show up every day open to learning our own biases, changing our behavior, and inviting in differences. Because impact matters. Microsoft operates in 190 countries and is made up of approximately 228,000 passionate employees worldwide.",
+    "Company Speciality": "Business Software, Developer Tools, Home & Educational Software, Tablets, Search, Advertising, Servers, Windows Operating System, Windows Applications & Platforms, Smartphones, Cloud Computing, Quantum Computing, Future of Work, Productivity, AI, Artificial Intelligence, Machine Learning, Laptops, Mixed Reality, Virtual Reality, Gaming, Developers, and IT Professional",
+    "Company Industry": "Software Development",
+    "Company Size": "10,001+ employees",
+    "Company Funding": {
+      "last_round_date": "2023-01-09T00:00:00.000Z",
+      "last_round_type": "Post IPO equity",
+      "rounds": 2
+    },
+    "News Coverage": [
+      {
+        "headline": "The 10 Biggest Microsoft News Stories Of 2025 (So Far)",
+        "summary": "Microsoft's news in 2025 has highlighted significant developments in AI innovation, security challenges, and new incentives for partners. The company continues to lead in technology advancements while addressing the complexities of cybersecurity and partner relations."
+      },
+      {
+        "headline": "Bringing BASIC back: Microsoft's 6502 BASIC is now open source",
+        "summary": "On September 5, 2025, Microsoft announced the open-sourcing of its 6502 BASIC programming language. This move reflects the company's commitment to fostering innovation and collaboration within the developer community, allowing new generations to explore programming."
+      },
+      {
+        "headline": "Microsoft and FFA help students use smart sensors and AI to learn about the future of farming and technology",
+        "summary": "On May 6, 2025, Microsoft partnered with the Future Farmers of America (FFA) to integrate smart sensors and AI into educational programs. This initiative aims to equip students with the skills needed for future agricultural technologies, showcasing Microsoft's dedication to education and innovation."
+      },
+      {
+        "headline": "Microsoft Build 2025: news and announcements from the annual developer conference",
+        "summary": "Microsoft is set to host its annual Build developer conference starting May 19, 2025, focusing on AI and AI agents. This event will showcase the latest advancements in Microsoft's technology ecosystem, emphasizing the company's leadership in AI development."
+      },
+      {
+        "headline": "What's coming, going and changing in Microsoft 365 in 2025",
+        "summary": "Microsoft announced the retirement of Viva Topics in February 2025, indicating a shift in focus towards more impactful features within Microsoft 365. This decision reflects the company's strategy to streamline its offerings and enhance user experience."
+      }
+    ],
+    "Summary": "Microsoft, headquartered in Redmond, Washington, is a global leader in software development, with a mission to empower every person and organization to achieve more. The company operates in 190 countries and employs approximately 228,000 passionate individuals. Microsoft specializes in a wide range of products and services, including business software, developer tools, cloud computing, AI, and more. The company is committed to innovation and believes that technology should be a force for good, contributing to a brighter future. Recent news highlights Microsoft's ongoing efforts in AI innovation, security, and educational partnerships. For instance, the announcement of the open-sourcing of Microsoft's 6502 BASIC programming language on September 5, 2025, demonstrates the company's commitment to fostering a collaborative developer community. Additionally, Microsoft's partnership with the Future Farmers of America (FFA) aims to integrate smart sensors and AI into educational programs, equipping students with essential skills for the future of agriculture. The upcoming Microsoft Build 2025 conference, starting May 19, will focus on AI advancements, showcasing the company's leadership in this critical area. Furthermore, Microsoft is adapting its offerings, as seen in the retirement of Viva Topics in February 2025, reflecting a strategic shift towards enhancing user experience within Microsoft 365. Overall, Microsoft continues to lead in technology innovation while addressing the complexities of cybersecurity and partner relations, ensuring it remains at the forefront of the software development industry."
+  }
+}
