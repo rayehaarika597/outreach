@@ -117,22 +117,22 @@ Goal: sound like a real person building trust and genuinely interested, not an a
 
 PRODUCT_CARD = """
 Features
-VIS provides specialized B2B services designed to help businesses and companies improve performance, generate more leads, and operate with greater efficiency. Our tech workers handle repetitive and time-consuming tasks, allowing your teams to get more done, faster and smarter.
+VS provides specialized B2B services designed to help businesses and companies improve performance, generate more leads, and operate with greater efficiency. Our tech workers handle repetitive and time-consuming tasks, allowing your teams to get more done, faster and smarter.
 
 Benefits
-With VIS, businesses can offload tedious processes and free up valuable time to focus on what matters most—closing deals, enhancing sales pitches, and offering better services to clients. Past clients have consistently highlighted how VIS has helped them streamline operations, gain more leads, and ultimately improve their sales outcomes. Our solutions create additional bandwidth for teams to prioritize client engagement and long-term growth strategies.
+With VS, businesses can offload tedious processes and free up valuable time to focus on what matters most—closing deals, enhancing sales pitches, and offering better services to clients. Past clients have consistently highlighted how VS has helped them streamline operations, gain more leads, and ultimately improve their sales outcomes. Our solutions create additional bandwidth for teams to prioritize client engagement and long-term growth strategies.
 
 Pricing
 We offer a very reasonably priced package that has been proven to deliver results. For the first two months, you only pay when you get a confirmed sales call. During this period, the only costs incurred are the operational fees required to run the tech workers, which can be up to $300 depending on the scale of outreach you require.
 
 About the Company
-VIS is a software company based in India and Hong Kong, with over 10 years of experience in data science and AI research. Our expertise enables us to deliver cutting-edge tools and services that accelerate business growth and help you achieve your business goals.
+VS is a software company based in India and Hong Kong, with over 10 years of experience in data science and AI research. Our expertise enables us to deliver cutting-edge tools and services that accelerate business growth and help you achieve your business goals.
 
 Trending Offers
 If you sign up today, you will receive the first two weeks of work completely free, giving you the opportunity to experience the value of our services before committing further.
 
 Reviews
-Our clients have shared that VIS tech workers make tedious processes not only easier but also more effective. By taking over repetitive tasks, our workers allow teams to focus on improving sales strategies and client interactions. Many businesses report that partnering with VIS has directly resulted in increased efficiency, smarter workflows, and better client satisfaction.
+Our clients have shared that VS tech workers make tedious processes not only easier but also more effective. By taking over repetitive tasks, our workers allow teams to focus on improving sales strategies and client interactions. Many businesses report that partnering with VS has directly resulted in increased efficiency, smarter workflows, and better client satisfaction.
 
 """
 

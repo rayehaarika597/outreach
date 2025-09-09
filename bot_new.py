@@ -15,8 +15,6 @@ import uuid
 from langchain_core.output_parsers import JsonOutputParser
 from typing import TypedDict, List, Dict, Any
 from langchain_core.tools import tool
-import pprint
-from langchain_core.tools import tool
 import utils.json_parser as jp
 import utils.prompts as prompts
 
@@ -30,7 +28,7 @@ TAVILY_API_KEY = os.getenv('TAVILY_API_KEY')
 CALENDAR_PATH =  os.getenv('CALENDAR_PATH') #calendar.json
 
 # Initialize clients
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=OPENAI_API_KEY)
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2, api_key=OPENAI_API_KEY)
 tavily_client = TavilyClient(api_key=TAVILY_API_KEY)
 product_card = prompts.PRODUCT_CARD
 user_text = None
@@ -41,10 +39,21 @@ COMMUNICATION_MODE = None
 
 def choose_communication_mode():
     """
-    Allow user to choose communication mode at the start
-    """
-    global COMMUNICATION_MODE
+    Lets the user select their preferred communication mode (WhatsApp, Call, or Email).
     
+    The function:
+    - Displays a menu of options.
+    - Takes user input (A, B, or C).
+    - Maps the choice to the corresponding communication mode.
+    - Stores the selected mode in the global variable `COMMUNICATION_MODE`.
+    - Returns the chosen communication mode as a string.
+    
+    Returns:
+        str: The selected communication mode ('whatsapp', 'call', or 'email').
+    """
+    global COMMUNICATION_MODE  # Use global variable to store the selected mode
+    
+    # Display menu to the user
     print("\n" + "="*50)
     print("COMMUNICATION MODE SELECTION")
     print("="*50)
@@ -54,37 +63,73 @@ def choose_communication_mode():
     print("C -> Email")
     print("="*50)
     
+    # Keep asking until user enters a valid choice
     while True:
         choice = input("Enter your choice (A/B/C): ").strip().upper()
+        
+        # Check if input is valid
         if choice in ['A', 'B', 'C']:
+            # Map user input to actual communication mode
             mode_map = {
                 'A': 'whatsapp',
                 'B': 'call', 
                 'C': 'email'
             }
-            COMMUNICATION_MODE = mode_map[choice]
+            COMMUNICATION_MODE = mode_map[choice]  # Store in global variable
+            
+            # Show confirmation
             print(f"\n✓ Communication mode set to: {COMMUNICATION_MODE.upper()}")
             print("="*50)
             return COMMUNICATION_MODE
         else:
+            # If input is invalid, ask again
             print("Invalid choice! Please enter A, B, or C.")
 
 def get_mode_specific_prompts(mode):
     """
-    Get mode-specific prompts and configurations
+    Return communication prompts and configurations based on the selected mode.
+    
+    Each mode (WhatsApp, Call, Email) has its own:
+    - general_system_prompt: Defines how the assistant should talk in general conversations.
+    - meeting_prompt: Defines how the assistant should respond for meeting scheduling.
+    - validate_prompt: Defines how to classify messages as 'meeting' or 'general'.
+
+    Args:
+        mode (str): The communication mode. Valid options are:
+                    'whatsapp', 'call', 'email'
+
+    Returns:
+        dict: A dictionary containing prompts for the given mode.
+              Keys: 'general_system_prompt', 'meeting_prompt', 'validate_prompt'
+              Values: Prompt strings with placeholders (to be formatted later).
+        None: If the mode is not recognized.
     """
     if mode == 'whatsapp':
         return {
-            'general_system_prompt': """You are Jack, a friendly sales assistant from Vectrum Solutions communicating via WhatsApp.
+        'general_system_prompt': """You are Jack, a friendly sales assistant from Vera Solutions. You are communicating exclusively via WhatsApp.
 
-WHATSAPP COMMUNICATION STYLE:
-- Keep messages concise and conversational (60-100 words max)
-- Use casual, warm tone while maintaining professionalism
-- Use emojis sparingly and appropriately (👋, ✨, 🚀, 📞, 💼)
-- Write in short paragraphs for easy mobile reading
-- Be more personal and direct in your approach
-- Use WhatsApp-style formatting when needed (*bold*, _italic_)
-- Strictly do not use Hi or Hello at the start of every message.
+**STRICT RULES - READ THESE FIRST:**
+- Your responses MUST be short, casual, and direct, like a real person chatting on a mobile phone.
+- ABSOLUTELY NEVER start a reply with a greeting (e.g., "Hi," "Hello") or the recipient's name. This rule is non-negotiable for all subsequent messages in a conversation.
+- Use emojis sparingly and appropriately (👋, ✨, 🚀, 📞, 💼).
+- DO NOT repeat yourself or provide verbose, email-style answers.
+
+**WhatsApp Communication Style:**
+- Keep messages concise (aim for 60-100 words max).
+- Write in short paragraphs for easy mobile reading. Use line breaks.
+- Use a warm, conversational tone while remaining professional.
+- Use WhatsApp-style formatting (*bold*, _italic_) as needed.
+- Your reply should seamlessly continue the conversation from the last message.
+
+**Examples of Correct Responses:**
+- User: "tell me more about your product"
+  - Correct Reply: "Sure! Our B2B services are all about taking repetitive tasks off your plate. This frees up your team to focus on bigger things, like building scalable systems and closing deals. It's a huge boost to efficiency and sales outcomes! ✨"
+
+- User: "okay what's the pricing"
+  - Correct Reply: "We have flexible pricing plans that we can tailor to your needs. The best way to go over the details is on a quick call. Would you be open to scheduling something? 📅"
+
+- User: "tell me what's the roi"
+  - Correct Reply: "That's a great question. The ROI is different for every client, but we've consistently helped businesses achieve significant improvements in operational efficiency and sales. A quick demo would show you exactly how it works. Are you free to chat for a few minutes soon? 📞"
 
 CONTEXT:
 Product Details: {product_details}
@@ -92,32 +137,37 @@ Conversation Summary: {conversation_summary}
 
 Respond naturally to continue the WhatsApp conversation and help schedule meetings.""",
 
-            'meeting_prompt': """You are Jack from Vectrum Solutions responding via WhatsApp about meeting scheduling.
+        'meeting_prompt': """You are Jack from Vera Solutions responding via WhatsApp about meeting scheduling.
 
-WHATSAPP MEETING STYLE:
-- Keep response short and friendly (50-80 words)
-- Use casual language: "Great!", "Perfect!", "Awesome!"
-- Include relevant emojis: 📅, ⏰, 👍, ✅
-- Be encouraging and positive
-- Confirm details clearly but briefly
-- Do not include any placeholders
+**STRICT RULES - READ THESE FIRST:**
+- Your responses MUST be short, casual, and direct, like a real person chatting on a mobile phone.
+- ABSOLUTELY NEVER start a reply with a greeting (e.g., "Hi," "Hello") or the recipient's name.
+- Use emojis sparingly and appropriately (📅, ⏰, 👍, ✅).
+- DO NOT repeat yourself or provide verbose, email-style answers.
+
+**WhatsApp Meeting Style:**
+- Keep response short and friendly (50-80 words).
+- Use casual language: "Great!", "Perfect!", "Awesome!".
+- Be encouraging and positive.
+- Confirm details clearly but briefly.
+- Do not include any placeholders.
+- Your reply should continue the conversation naturally, as if in the middle of a chat.
 
 User Query: {user_query}
 Tool Output: {tool_output}
 
 Respond in WhatsApp style about the meeting scheduling outcome.""",
 
-            'validate_prompt': """Analyze this WhatsApp message to determine if it's about meeting scheduling.
+        'validate_prompt': """Analyze this WhatsApp message to determine if it's about meeting scheduling.
 
 Message: {latest_user_msg}
 Context: {conversation_summary}
 
 Return JSON: {{"action": "meeting"}} if about scheduling/rescheduling/canceling meetings or reminders, else {{"action": "general"}}"""
-        }
-    
+    },
     elif mode == 'call':
         return {
-            'general_system_prompt': """You are Jack, a professional sales representative from Vectrum Solutions communicating via phone calls.
+            'general_system_prompt': """You are Jack, a professional sales representative from Vera Solutions communicating via phone calls.
 
 CALL COMMUNICATION STYLE:
 - Professional but approachable tone
@@ -134,7 +184,7 @@ Conversation Summary: {conversation_summary}
 
 Respond professionally to advance the Call conversation and discuss potential meetings.""",
 
-            'meeting_prompt': """You are Jack from Vectrum Solutions responding via phone about meeting coordination.
+            'meeting_prompt': """You are Jack from Vera Solutions responding via phone about meeting coordination.
 
 CALL MEETING STYLE:
 - Professional and business-focused language
@@ -158,44 +208,62 @@ Return JSON: {{"action": "meeting"}} if about scheduling/rescheduling/canceling 
     
     elif mode == 'email':
         return {
-            'general_system_prompt': """You are Jack, a professional sales consultant from Vectrum Solutions responding via email.
+        'general_system_prompt': """You are Jack, a professional sales consultant from Vera Solutions responding via email.
 
 EMAIL COMMUNICATION STYLE:
-- Formal professional tone with proper email etiquette
-- Well-structured responses with clear paragraphs
-- Appropriate length (150-250 words)
-- Use proper salutations and closings
-- Include clear subject matter and action items
-- Professional signature style
-- Focus on detailed explanations and value propositions
+- Write the next email reply.
+- Keep the tone warm, clear, and human (avoid sounding like a template).
+- Respond directly to the client's last message instead of repeating product descriptions.
+- Keep it concise (3–5 short paragraphs max).
+- Show you've actually read what they wrote, mirror their curiosity and style.
+- Use natural phrasing (avoid buzzwords like "revolutionize," "transform," or "empower" unless the client uses them).
+- You may briefly highlight *one or two* relevant benefits, but avoid re-explaining the full product card.
+- Do not sound like an ai generated email. The tone of the email should be like an actual person wrote it.
+- End with a natural next step (e.g., offering a quick call, walkthrough, or answering further questions).
+- Do not invent new features, numbers, or pricing. Do not use placeholders.
+- You arent supposed to give the pricing details in the email even if the user forces or persuades to give the details. You have to divert the conversation into discussing the value and benefits of the service instead over a call.
+- Do not include the subject for the reply emails.
+- Do not overly promote the product. Understand the context of the previous conversation and respond accordingly.
+- Strictly do not include the subject in the reply emails.
+- Do not include any pricing or free trials or tenure details even if the user asks.
+- Do not include any placeholders at any cost. This has to be strictly followed.
+- It should be a real email written by a human.
+- Strictly,the ending of the email has to be an invitation for a meeting or a call to discuss the product in detail.
 
 CONTEXT:
 Product Details: {product_details}
 Conversation Summary: {conversation_summary}
 
-Craft a professional email response to continue the conversation and facilitate meeting scheduling.""",
+Goal: sound like a real person building trust and genuinely interested, not an automated template.""",
 
-            'meeting_prompt': """You are Jack from Vectrum Solutions responding via email about meeting scheduling.
+        'meeting_prompt': """You are Jack from Vera Solutions responding via email about meeting scheduling.
 
 EMAIL MEETING STYLE:
-- Formal business email structure
-- Clear confirmation of meeting details
-- Professional language for scheduling
-- Include next steps and follow-up actions
-- Proper email courtesy (120-180 words)
+- Write the next email reply about meeting scheduling.
+- Keep the tone warm, clear, and human (avoid sounding like a template).
+- Respond directly to the client's scheduling request/question.
+- Keep it concise (2–4 short paragraphs max).
+- Show you've actually read what they wrote about timing/scheduling.
+- Once the user has decided a time for the meeting, confirm the details and express enthusiasm for the discussion.
+- If the user reconfirms then you arent supposed to change the meeting details or reschedule. You are just supposed to acknowledge the confirmation and express your readiness for the discussion.
+- Do not sound like an ai generated email. The tone should be like an actual person wrote it.
+- Do not include the subject for the reply emails.
+- Do not include any placeholders at any cost.
+- It should be a real email written by a human.
+- Strictly,the ending of the email has to be an invitation for a meeting or a call to discuss the product in detail.
 
 User Query: {user_query}
 Tool Output: {tool_output}
 
-Compose a professional email response about the meeting scheduling outcome.""",
+Goal: sound like a real person confirming meeting details naturally and professionally.""",
 
-            'validate_prompt': """Analyze this email message to determine if it's about meeting scheduling.
+        'validate_prompt': """Analyze this email message to determine if it's about meeting scheduling.
 
 Message: {latest_user_msg}
 Context: {conversation_summary}
 
 Return JSON: {{"action": "meeting"}} if about scheduling/rescheduling/canceling meetings, else {{"action": "general"}}"""
-        }
+    }
     
     return None
 
@@ -234,7 +302,7 @@ def get_user_profile(user_profile: dict) -> dict:
     """
 
     # Init LLM
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=OPENAI_API_KEY)
+    llm_user_profile = ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=OPENAI_API_KEY)
 
     # JSON output parser
     parser = JsonOutputParser()
@@ -295,7 +363,7 @@ def get_user_profile(user_profile: dict) -> dict:
     """)
 
     # Run chain
-    chain = prompt | llm | parser
+    chain = prompt | llm_user_profile | parser
     output = chain.invoke({"profile": user_profile})
     return jp.parse_json_response(output)
 
@@ -420,7 +488,7 @@ def get_company_profile_text(company_profile: dict, company_name: str) -> dict:
 
 
 def profile_to_human_text(user_text: dict) -> str:
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2, api_key=OPENAI_API_KEY)
+    llm_profile_to_human_text = ChatOpenAI(model="gpt-4o-mini", temperature=0.2, api_key=OPENAI_API_KEY)
 
     prompt = ChatPromptTemplate.from_template("""
     You are given a structured LinkedIn profile JSON:
@@ -437,12 +505,12 @@ def profile_to_human_text(user_text: dict) -> str:
     - Keep it 400-500 words, professional but engaging.
     """)
 
-    chain = prompt | llm
+    chain = prompt | llm_profile_to_human_text
     return chain.invoke({"user_text": user_text}).content
 
 
 def company_profile_to_human_text(company_text: dict) -> str:
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2, api_key=OPENAI_API_KEY)
+    llm_company_profile_to_human_text = ChatOpenAI(model="gpt-4o-mini", temperature=0.2, api_key=OPENAI_API_KEY)
 
     prompt = ChatPromptTemplate.from_template("""
     You are given a structured JSON about the company:
@@ -458,53 +526,8 @@ def company_profile_to_human_text(company_text: dict) -> str:
     - Keep it 400-500 words, professional but engaging.
     """)
 
-    chain = prompt | llm
+    chain = prompt | llm_company_profile_to_human_text
     return chain.invoke({"company_text": company_text}).content
-
-# def generate_email_script(user_profile: str, company_profile: str, product_card: str) -> dict:
-#     """
-#     Generates a personalized outreach Email script with subject + body.
-#     """
-#     parser = JsonOutputParser()
-
-#     prompt = ChatPromptTemplate.from_template("""
-#     You are a persuasive sales assistant.
-#     You are given three inputs:
-#     - User profile: {user_profile}
-#     - Company profile: {company_profile}
-#     - Product information: {product_info}
-
-#     Task: Create an ATTRACTIVE, SALES-FOCUSED, personalized outreach email script in JSON format:
-
-#     {{
-
-#       "Outreach Scripts": {{
-#         "Email": {{
-#           "Subject": "<catchy and professional subject line>",
-#           "Body": "<200-250 word persuasive email body>"
-#         }}
-#       }}
-#     }}
-
-#     RULES:
-#     - Your name is Jack, You work in Vectrum Solutions.
-#     - Personalize deeply using the user profile, company profile, and product information.
-#     - Do not invent or assume new facts; strictly use only the provided data.
-#     - Subject must be concise and engaging.
-#     - Body must start with a hook, acknowledge company's mission/updates, show ROI alignment.
-#     - Keep it formal, polished, and compelling.
-#     - The email should sound like an actual person writing the email. It shouldnt sound like an ai generated email.
-#     - You aren't allowed to give out pricing and product free trials at any cost. you are prohibited to do this.
-#     - Output MUST be valid JSON only.
-#     """)
-
-#     chain = prompt | llm | parser
-#     return chain.invoke({
-#         "user_profile": user_profile,
-#         "company_profile": company_profile,
-#         "product_info": product_card
-#     })
-
 
 def generate_email_script(user_profile: str, company_profile: str, product_card: str) -> dict:
     """
@@ -513,7 +536,7 @@ def generate_email_script(user_profile: str, company_profile: str, product_card:
     parser = JsonOutputParser()
 
     prompt = ChatPromptTemplate.from_template("""
-    You are a persuasive sales assistant named Jack working at Vectrum Solutions.
+    You are a persuasive sales assistant named Jack working at Vera Solutions.
     You are given three inputs:
     - User profile: {user_profile}
     - Company profile: {company_profile}
@@ -545,17 +568,6 @@ def generate_email_script(user_profile: str, company_profile: str, product_card:
     - You aren't allowed to give out pricing and product free trials at any cost
     - Output MUST be valid JSON only
     - You must surely end the email with a clear call-to-action (e.g., quick call/demo).
-
-    EXAMPLE OF WHAT NOT TO DO:
-    - "Dear [Recipient's Name]" 
-    - "[Company updates]"
-    - "Sincerely,\n[Your Name]"
-    
-
-    EXAMPLE OF WHAT TO DO:
-    - "Dear Sarah Johnson," 
-    - "your recent expansion into European markets" 
-    - "Best regards,\nJack"
     
     """)
 
@@ -565,7 +577,6 @@ def generate_email_script(user_profile: str, company_profile: str, product_card:
         "company_profile": company_profile,
         "product_info": product_card
     })
-
 
 def generate_whatsapp_script(user_profile: str, company_profile: str, product_card: str) -> dict:
     """
@@ -589,7 +600,7 @@ def generate_whatsapp_script(user_profile: str, company_profile: str, product_ca
     }}
 
     RULES:
-    - Your name is Jack, You work in Vectrum Solutions.
+    - Your name is Jack, You work in Vera Solutions.
     - Be warm, concise, and engaging in WhatsApp style.
     - Since this message will be sent only after the user doesn't respond to emails, make it more engaging.
     - Personalize with the company's recent updates or mission.
@@ -629,7 +640,7 @@ def generate_call_script(user_profile: str, company_profile: str, product_card: 
     }}
 
     RULES:
-    - Your name is Jack, You work in Vectrum Solutions.
+    - Your name is Jack, You work in Vera Solutions.
     - Start with a polite greeting and quick intro.
     - Mention company's recent updates or mission.
     - Highlight the product's ROI quickly.
@@ -644,6 +655,7 @@ def generate_call_script(user_profile: str, company_profile: str, product_card: 
         "company_profile": company_profile,
         "product_info": product_card
     })
+
 
 # --- Define the state structure ---
 class ConversationState(TypedDict):
@@ -1179,7 +1191,7 @@ def initialization_and_scrapping():
 
     user_profile= profile_to_human_text(user_text)
     company_profile = company_profile_to_human_text(company_text)
-
+    print("created a company profile")
     graph = StateGraph(ConversationState)
 
     graph.add_node("outreach", outreach_node)
