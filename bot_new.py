@@ -241,17 +241,21 @@ Goal: sound like a real person building trust and genuinely interested, not an a
 EMAIL MEETING STYLE:
 - Write the next email reply about meeting scheduling.
 - Keep the tone warm, clear, and human (avoid sounding like a template).
+- Write a very short, direct email reply
 - Respond directly to the client's scheduling request/question.
-- Keep it concise (2–4 short paragraphs max).
+- Keep it concise (2-6 sentences max).
 - Show you've actually read what they wrote about timing/scheduling.
-- Once the user has decided a time for the meeting, confirm the details and express enthusiasm for the discussion.
+- Once the user has decided a time for the meeting, confirm the details.
 - If the user reconfirms then you arent supposed to change the meeting details or reschedule. You are just supposed to acknowledge the confirmation and express your readiness for the discussion.
 - Do not sound like an ai generated email. The tone should be like an actual person wrote it.
 - Do not include the subject for the reply emails.
 - Do not include any placeholders at any cost.
 - It should be a real email written by a human.
+- Confirm the meeting time and express that you are looking forward to it.
+- End by offering to answer any questions.
+- Do not add any extra details about the company or the meeting agenda.
 - Strictly,the ending of the email has to be an invitation for a meeting or a call to discuss the product in detail.
-
+- End the email with a professional sign-off like "Best regards,\nJack\nVera Solutions".
 User Query: {user_query}
 Tool Output: {tool_output}
 
@@ -536,7 +540,7 @@ def generate_email_script(user_profile: str, company_profile: str, product_card:
     parser = JsonOutputParser()
 
     prompt = ChatPromptTemplate.from_template("""
-    You are a persuasive sales assistant named Jack working at Vera Solutions.
+    You are a persuasive sales assistant named Jack working at Vectrum Solutions.
     You are given three inputs:
     - User profile: {user_profile}
     - Company profile: {company_profile}
@@ -554,21 +558,35 @@ def generate_email_script(user_profile: str, company_profile: str, product_card:
     }}
 
     CRITICAL RULES FOR EMAIL BODY:
-    - Start with "Dear [Name from user profile]," using the ACTUAL name from the profile
-    - Your signature must be exactly: "Best regards,\nJack"
+    - Start with "Dear [Name from user profile]," using the ACTUAL name from the user profile
+    - Your signature must be exactly: "Best regards,\nJack\nVera Solutions"
     - NO PLACEHOLDERS anywhere in the email - use real information from the profiles
-    - NO brackets like [Recipient's Name], [Your Position], [Company Name], etc.
+    - Strictly NO brackets like [Recipient's Name], [Your Position], [Company Name], etc.
+    - Use the user profile, company profile, and product info to deeply personalize.
+    - The email must feel like it was written by a real person to a specific person at a specific company.
+    - The email should not be generic or templated.
     - Use SPECIFIC company details, recent news, and user's actual role/experience
     - Personalize deeply using the user profile, company profile, and product information
     - Do not invent or assume new facts; strictly use only the provided data
     - Subject must be concise and engaging
-    - Body must start with a hook, acknowledge company's mission/updates, show ROI alignment.
+    - Body must start with a hook, acknowledge company's mission/updates, show ROI alignment
     - Keep it formal, polished, and compelling
-    - The email should sound like an actual person writing to a specific person at a specific company. It shouldnt sound like an ai generated email.
+    - The email should sound like an actual person writing to a specific person at a specific company
     - You aren't allowed to give out pricing and product free trials at any cost
     - Output MUST be valid JSON only
-    - You must surely end the email with a clear call-to-action (e.g., quick call/demo).
-    
+    - The email should always end with a call to action for a meeting or a call to discuss the product in detail.
+
+    EXAMPLE OF WHAT NOT TO DO:
+    - "Dear [Recipient's Name]" 
+    - "[Your Position]" 
+    - "[Company updates]" 
+    - "[Your contact info]" 
+
+    EXAMPLE OF WHAT TO DO:
+    - "Dear Sarah Johnson," 
+    - "Jack\nSales Representative" 
+    - "your recent expansion into European markets" 
+    - "jack@vectrumtech.com" 
     """)
 
     chain = prompt | llm | parser
@@ -577,6 +595,8 @@ def generate_email_script(user_profile: str, company_profile: str, product_card:
         "company_profile": company_profile,
         "product_info": product_card
     })
+
+
 
 def generate_whatsapp_script(user_profile: str, company_profile: str, product_card: str) -> dict:
     """
@@ -667,6 +687,9 @@ class ConversationState(TypedDict):
 # --- Node: Generate outreach scripts and initialize log ---
 def outreach_node(state: ConversationState) -> ConversationState:
     # Call each generator separately
+    print("user text:", user_text)
+    print("company text:", company_text)
+    print("product card:", product_card)
     email_script = generate_email_script(user_text, company_text, product_card)
     whatsapp_script = generate_whatsapp_script(user_text, company_text, product_card)
     call_script = generate_call_script(user_text, company_text, product_card)
@@ -1181,6 +1204,7 @@ def reply_node(state: dict) -> dict:
 
 
 def initialization_and_scrapping():
+    global user_text, company_text
     print('fetching user profile')
     user_profile = user_profile_scraper("https://www.linkedin.com/in/kriti-rohilla/")
     user_text = get_user_profile(user_profile)
@@ -1212,10 +1236,10 @@ def initialization_and_scrapping():
     final_state = app.invoke(initial_state)
     conversation_id = final_state["conversation_id"]
     
-    user_text = jp.parse_json_response(user_text)
-    company_text = jp.parse_json_response(company_text)
+    # user_text = jp.parse_json_response(user_text)
+    # company_text = jp.parse_json_response(company_text)
 
-    return user_text, company_text
+    # return user_text, company_text
 
 
 def display_initial_outreach_scripts(conversation_file):
@@ -1260,17 +1284,20 @@ if __name__ == '__main__':
     # Load or initialize user and company data
     try:
         with open('user_text.json', 'r') as f:
-            user_text = json.load(f)
+            user_text_json = json.load(f)
+            user_text = profile_to_human_text(user_text_json)
         
         with open('company_text.json', 'r') as f:
-            company_text = json.load(f)
-        
+            company_text_json = json.load(f)
+            company_text = company_profile_to_human_text(company_text_json)
+            
         print("✓ Loaded existing user and company profiles")
     except FileNotFoundError:
         print("Profiles not found. Initializing and scraping...")
-        user_text, company_text = initialization_and_scrapping()
+        # Call the function without assigning a return value
+        initialization_and_scrapping()
         
-        if user_text and company_text and type(user_text) == dict and type(company_text) == dict:
+        if user_text and company_text:
             with open('user_text.json', 'w') as f:
                 json.dump(user_text, f, indent = 2)
             
