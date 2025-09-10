@@ -167,45 +167,69 @@ Return JSON: {{"action": "meeting"}} if about scheduling/rescheduling/canceling 
     },
     elif mode == 'call':
         return {
-            'general_system_prompt': """You are Jack, a professional sales representative from Vera Solutions communicating via phone calls.
+    'general_system_prompt': """You are Jack on a phone call. STRICT RULES:
 
-CALL COMMUNICATION STYLE:
-- Professional but approachable tone
-- Use industry terminology and business language
-- Keep messages focused and valuable (100-150 words)
-- Reference professional achievements and company updates
-- Maintain networking etiquette
-- No emojis or casual language
-- Focus on business value and professional growth
+NEVER SAY THESE BANNED PHRASES:
+- "Thank you for your response/interest/question"
+- "I'm glad to hear"
+- "Let's dive deeper"
+- "Would you like to explore"
+- "I'm excited"
+- Any variation of the above
 
-CONTEXT:
-Product Details: {product_details}
-Conversation Summary: {conversation_summary}
+REQUIRED FORMAT:
+- Exactly 1-2 sentences
+- Start immediately with your point
+- End with one direct question
+- No corporate speak
 
-Respond professionally to advance the Call conversation and discuss potential meetings.""",
+If client says "yes" → Don't thank them, just explain what you do
+If client asks "how will it help" → Don't thank them, just explain benefits
 
-            'meeting_prompt': """You are Jack from Vera Solutions responding via phone about meeting coordination.
+EXAMPLES:
+Client: "yes"
+You: "We handle your repetitive tasks so your team can focus on closing deals. What's taking up most of your team's time?"
 
-CALL MEETING STYLE:
-- Professional and business-focused language
-- Reference calendar management and professional scheduling
-- Use terms like "schedule a call", "book a meeting", "coordinate calendars"
-- Be concise but thorough (80-120 words)
-- Maintain professional courtesy
+Client: "how will your product help me"
+You: "We automate boring tasks like data entry and lead research so you can spend time on actual sales. What repetitive work is slowing your team down?"
+
+CONTEXT: {product_details}
+CONVERSATION: {conversation_summary}
+
+Be direct. No fluff.""",
+
+    'meeting_prompt': """You are Jack from Vera Solutions on a phone call scheduling a meeting.
+
+MEETING RULES:
+- 1 sentence maximum
+- Get straight to scheduling
+- NO extra information or pleasantries
+- Sound like you're actually talking, not reading a script
+
+BAD EXAMPLE:
+"I can check my calendar for that time. How does Thursday at 2 PM work for you, and would you prefer a video call or phone meeting?"
+
+GOOD EXAMPLE:
+"How's Thursday at 2 PM?"
 
 User Query: {user_query}
 Tool Output: {tool_output}
 
-Respond professionally about the meeting scheduling outcome.""",
+Be brief and natural.""",
 
-            'validate_prompt': """Analyze this phone message to determine if it's about professional meeting coordination.
+    'validate_prompt': """Analyze this phone message to determine if it's about meeting coordination or general conversation.
+
+MEETING CUES: Direct mentions of scheduling, availability, times
+Examples: "When are you free?", "Let's meet", "How's your calendar?", "Can we schedule something?"
+
+GENERAL CUES: Everything else - greetings, confirmations, product questions
+Examples: "yes speaking", "hello", "tell me more", "what do you do?"
 
 Message: {latest_user_msg}
 Context: {conversation_summary}
 
-Return JSON: {{"action": "meeting"}} if about scheduling/rescheduling/canceling meetings, else {{"action": "general"}}"""
-        }
-    
+Return JSON: {{"action": "meeting"}} if explicitly about scheduling, otherwise {{"action": "general"}}."""
+}
     elif mode == 'email':
         return {
         'general_system_prompt': """You are Jack, a professional sales consultant from Vera Solutions responding via email.
@@ -540,7 +564,7 @@ def generate_email_script(user_profile: str, company_profile: str, product_card:
     parser = JsonOutputParser()
 
     prompt = ChatPromptTemplate.from_template("""
-    You are a persuasive sales assistant named Jack working at Vectrum Solutions.
+    You are a persuasive sales assistant named Jack working at VeraSolutions.
     You are given three inputs:
     - User profile: {user_profile}
     - Company profile: {company_profile}
@@ -637,8 +661,45 @@ def generate_whatsapp_script(user_profile: str, company_profile: str, product_ca
         "product_info": product_card
     })
 
-
 def generate_call_script(user_profile: str, company_profile: str, product_card: str) -> dict:
+    """
+    Generates a Phone Call script for outreach.
+    """
+    parser = JsonOutputParser()
+
+    prompt = ChatPromptTemplate.from_template("""
+    You are a persuasive sales assistant.
+    Inputs:
+    - User profile: {user_profile}
+    - Company profile: {company_profile}
+    - Product information: {product_info}
+
+    Task: Create a PHONE CALL outreach script in JSON format:
+
+    {{
+      "Outreach Scripts": {{
+        "Phone Call": "<Script of 1-2 sentence starting a conversation>"
+      }}
+    }}
+
+    RULES:
+    - Your name is Jack, You work in Vera Solutions.
+    - Start with a polite greeting and quick intro.
+    - The starting message has to be like "Hi ,Am i speaking to [Name]?, This is Jack from Vera Solutions.Is it a good time to talk?"
+
+    - Output MUST be valid JSON only.
+    """)
+
+    chain = prompt | llm | parser
+    return chain.invoke({
+        "user_profile": user_profile,
+        "company_profile": company_profile,
+        "product_info": product_card
+    })
+
+
+
+def _generate_call_script(user_profile: str, company_profile: str, product_card: str) -> dict:
     """
     Generates a Phone Call script for outreach.
     """
@@ -662,6 +723,7 @@ def generate_call_script(user_profile: str, company_profile: str, product_card: 
     RULES:
     - Your name is Jack, You work in Vera Solutions.
     - Start with a polite greeting and quick intro.
+    - The starting message has to be like "Hi ,Am i speaking to [Name]?, This is Jack from Vera Solutions."
     - Mention company's recent updates or mission.
     - Highlight the product's ROI quickly.
     - Ask engaging questions to keep the conversation flowing.
@@ -748,7 +810,7 @@ def load_calendar(path: str = CALENDAR_PATH):
         raise RuntimeError(f"calendar.json has some problem: {e}")
 
 # --- Node: summarization ---
-def _get_summary_chain():
+def get_summary_chain():
     summary_prompt_txt = prompts.SUMMARY_PROMPT
     summary_prompt = ChatPromptTemplate.from_template(summary_prompt_txt)
     summary_chain = summary_prompt | llm | StrOutputParser()
@@ -769,7 +831,7 @@ def format_conversation_log(log: list) -> str:
 
 def summarize_node(state: dict) -> dict:
     conversation_log = format_conversation_log(state["log"])
-    summary_chain = _get_summary_chain()
+    summary_chain = get_summary_chain()
     summary = summary_chain.invoke({"conversation_log": conversation_log})
 
     # Keep the summary only at the top level (do NOT append an assistant log entry)
