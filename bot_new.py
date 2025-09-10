@@ -1029,11 +1029,15 @@ def cancel_event(id, sch_response):
     try:
         calendar = load_calendar()
         for booking in calendar['bookings']:
+            # Check if the current booking belongs to the given id
             if booking['id'] == id:
+                # Further check if both date and time match the cancellation request.Only cancel if all three (id, date, and time) match.
                 if booking['date'] == sch_response['date'] and booking['time'] == sch_response['time']:
+                    # Remove the matched booking from the list of bookings.
                     calendar['bookings'].remove(booking)
-                    save_calendar(calendar)
+                    # Add the cancelled time slot back into the list of available slots for that date.
                     calendar[sch_response['date']].append(sch_response['time'])
+                    save_calendar(calendar)
                     break
         
         return {
@@ -1047,23 +1051,36 @@ def cancel_event(id, sch_response):
             "message": "Cancellation Failed"
         }
     
-def _get_parse_chain():
+def get_parse_chain():
+    """
+    Check if it user is agreeing for meeting or else is busy and asks to reminds later
+    If it is meeting, decide whether user wants to schedule or reschedule or cancel
+    the meeting.
+    """
     parse_prompt = ChatPromptTemplate.from_template(prompts.PARSE_PROMPT)
     parse_chain = parse_prompt | llm | StrOutputParser()
     return parse_chain
 
-def detect_and_schedule_node(state: dict) -> dict:
+def detect_and_schedule(state: dict) -> dict:
+    """
+    
+    """
+    # get the latest user message.
     latest_user_msg = next((entry for entry in reversed(state["log"]) if entry["role"] == "user"), None)
+    # If no user message is found, nothing to process return state unchanged.
     if not latest_user_msg:
         return state
-    
+    # Extract the content of the latest user message.
     latest_text = latest_user_msg["content"]
+    # get the current date and time
     now_time = datetime.now()
     today = now_time.strftime("%Y-%m-%d")
     today_day = now_time.strftime("%A")
     max_time = datetime.now()
     
+    # load the calendar
     calendar = load_calendar()
+
     if 'bookings' in calendar:
         for booking in calendar['bookings']:
             if 'id' in booking and booking['id'] == state['conversation_id']:
@@ -1071,8 +1088,10 @@ def detect_and_schedule_node(state: dict) -> dict:
                 dt_dt = datetime.strptime(str_date_time, '%Y-%m-%d %H:%M')
                 if dt_dt > max_time:
                     max_time = dt_dt
-    
-    parse_chain = _get_parse_chain()
+
+    # LLM to check if the message is a meeting/scheduling related message or a normal message.
+    parse_chain = get_parse_chain()
+    # Run the user’s latest message through the parser with Today’s date and day,Current scheduled datetime,User’s query
     schedule_resp = parse_chain.invoke(
         {
             "today_date_str": today,
@@ -1083,11 +1102,14 @@ def detect_and_schedule_node(state: dict) -> dict:
     )
 
     sch_response = jp.parse_json_response(schedule_resp)
-    print(sch_response)
+    # print(sch_response)
+    # Parse the parser’s output into a Python dictionary (sch_response)
     if sch_response:
         # Fixed typo: 'reschule' -> 'reschedule'
         if sch_response['intent'].lower() == 'schedule' or sch_response['intent'].lower() == 'reschedule':
+            # If intent is schedule or reschedule: Call scheduler() with conversation_id, parsed response, and communication mode
             sch_resp = scheduler(state['conversation_id'], sch_response, state['communication_mode'])
+            # Append tool output to log with message (success/failure).
             state['log'].append(
                 {
                     "id": state['conversation_id'],
@@ -1097,7 +1119,14 @@ def detect_and_schedule_node(state: dict) -> dict:
                     "content": sch_resp['message']
                 }
             )
-        
+        # If intent is cancel:
+
+            # Try cancelling event for this conversation.
+            # Retry up to 5 times if it fails.
+            # Instead of telling the user “Cancellation Failed” right away, retrying a few times gives the system a chance to succeed.
+            # On success append success message to log.
+            # If all retries fail append failure message.
+
         if sch_response['intent'].lower() == 'cancel':
             cancel_resp = cancel_event(state['conversation_id'], sch_response)
             c = 0
@@ -1129,6 +1158,7 @@ def detect_and_schedule_node(state: dict) -> dict:
                         }
                     )
 
+        # If action is reminder:Make sure state has a reminders list. Append reminder info (id, context, date, time).
         if sch_response['action'] == 'reminder':
             # Initialize reminders if it doesn't exist
             if 'reminders' not in state:
@@ -1139,11 +1169,11 @@ def detect_and_schedule_node(state: dict) -> dict:
                 "date": sch_response['date'],
                 "time": sch_response['time']
             })
-    
+    # Call summarization step (to shorten conversation log while keeping context).
     state = summarize_node(state)
     return state
 
-def _check_product_reminder(state, user_msg):
+def check_product_reminder(state, user_msg):
     prompt = prompts.PRODUCT_REMINDER_PROMPT.format(
         user_profile = str(user_text),
         communication_mode = state['communication_mode'],
@@ -1166,14 +1196,25 @@ def _check_product_reminder(state, user_msg):
     }
 
 
-def _validate_and_generate_response(state, latest_user_msg):
+def validate_and_generate_response(state, latest_user_msg):
+    """
+    decides what type of response has to be generated.either a meeting reply/product details/remainder/cancellation
+    """
+    # gets the mode of communication and directs the replies accordingly.
+    # email is chosen as a fallback/default communication mode.
     mode_prompts = get_mode_specific_prompts(state.get('communication_mode', 'email'))
-    meet_resp = _check_product_reminder(state, latest_user_msg)
+    # checks if the user message is regarding the product/general stuff or remainder/meeting
+    meet_resp = check_product_reminder(state, latest_user_msg)
+    # If the message is product-related but not a reminder, return a general response using the message from check_product_reminder
     if meet_resp['success'] and meet_resp['type'].lower() != 'reminder':
         return {
             "type": "general",
             "message": meet_resp['message']
         }
+    # if the message is meeting/remainder related then 
+    # 1.Format a meeting scheduling prompt using the user query and conversation summary.
+    # 2. Send it to the LLM to generate the response.
+    # 3. Return type = 'meeting' with the generated message.
     elif meet_resp['success'] and meet_resp['type'].lower() == 'reminder':
         meeting_prompt_text = mode_prompts['meeting_prompt'].format(
             user_query = latest_user_msg['content'],
@@ -1185,16 +1226,19 @@ def _validate_and_generate_response(state, latest_user_msg):
             "message": output
         }
     
+    # If the message wasn’t recognized as product/reminder/meeting:
+    # 1.Use a validate prompt to ask the LLM: “What type of message is this?”
+    # 2.Send to LLM and parse the response into a dictionary (resp).
     validate_prompt_text = mode_prompts['validate_prompt'].format(
         conversation_summary = state.get('conversation_summary', ''),
         latest_user_msg = latest_user_msg['content']
     )
-
     response = llm.invoke(validate_prompt_text)
     print('[VALIDATE BLOCK]Response...')
     print(response.content)
     resp = jp.parse_json_response(response.content)
-    
+
+    # If LLM decides the message should trigger a meeting, generate a meeting response again (same as before).
     if resp['action'] == 'meeting':
         meeting_prompt_text = mode_prompts['meeting_prompt'].format(
             user_query = latest_user_msg['content'],
@@ -1206,6 +1250,12 @@ def _validate_and_generate_response(state, latest_user_msg):
             "message": output
         }
     else:
+        # If the LLM decides it’s not a meeting:
+        # 1. Build a general chat prompt using:
+        #     Conversation summary
+        #     Latest user message
+        #     Product details
+        # 2. Send it to LLM to generate a general reply.
         system_prompt = mode_prompts['general_system_prompt']
         system_prompt_template = SystemMessagePromptTemplate.from_template(system_prompt)
         latest_user_prompt_template = HumanMessagePromptTemplate.from_template("""Latest client message:
@@ -1221,10 +1271,10 @@ def _validate_and_generate_response(state, latest_user_msg):
             "latest_message": latest_user_msg["content"],
             "product_details": product_card
         })
-
+        # Double checking step: send the generated reply to another validation prompt.This makes sure the product information or any other details in the response is correct.
         validate_product_pricing_output = llm.invoke(prompts.VALIDATE_PRODUCT_PRICING_PROMPT.format(output = assistant_reply)).content
         
-
+        # return the response as general type with the validated message.
         return {
             "type": "general",
             "message": validate_product_pricing_output
@@ -1232,20 +1282,37 @@ def _validate_and_generate_response(state, latest_user_msg):
     
 
 def reply_node(state: dict) -> dict:
+    
+    """
+    This function is responsible for generating a response to the latest user message in the log
+    and appending it to the log. It also updates the state with the new response.
+
+    Args:
+        state (dict): The current state of the conversation.
+
+    Returns:
+        dict: The updated state of the conversation.
+    """
+    # Searches the conversation log from the most recent entry backward. "next" is used for that.
     latest_user_msg = next(
         (entry for entry in reversed(state["log"]) if entry["role"] == "user"),
         None
     )
+    # raise an error when there's no user message. this makes sure that the agent only replies when there’s a message to respond to.
     if not latest_user_msg:
         raise ValueError("No user message found in the log.")
     
-    response = _validate_and_generate_response(state, latest_user_msg)
-    
+    # Decides whether the response is a  general reply or meeting-related reply (scheduling/reminder)
+    response = validate_and_generate_response(state, latest_user_msg)
+
+    # If the response type is meeting, call detect_and_schedule to check availability and schedule/reschedule/cancel events.
+    # Re-run validate_and_generate_response to update the response after scheduling changes.
     if response['type'] == 'meeting':
-        state = detect_and_schedule_node(state)
-        response = _validate_and_generate_response(state, latest_user_msg)
+        state = detect_and_schedule(state)
+        response = validate_and_generate_response(state, latest_user_msg)
     
-    # Get the communication mode for proper response type
+
+    # Get the communication mode from the state (email, whatsapp, call).Map the mode to a response type for logging purpose
     comm_mode = state.get('communication_mode', 'email')
     response_type_map = {
         'whatsapp': 'reply_whatsapp',
@@ -1253,6 +1320,7 @@ def reply_node(state: dict) -> dict:
         'email': 'reply_email'
     }
     
+    # Add a new entry to the conversation log for the assistant’s response.
     state["log"].append({
         "id": str(uuid.uuid4().hex),
         "role": "assistant",
