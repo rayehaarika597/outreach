@@ -1,0 +1,41 @@
+{
+  "Company Profile": {
+    "Company Id": "microsoft",
+    "Company Name": "Microsoft",
+    "Company Website": "https://news.microsoft.com/",
+    "Company Linkedin Url": "https://www.linkedin.com/company/microsoft",
+    "Company Headquarters": "Redmond, Washington",
+    "About the company": "Every company has a mission. What's ours? To empower every person and every organization to achieve more. We believe technology can and should be a force for good and that meaningful innovation contributes to a brighter world in the future and today. Our culture doesn\u2019t just encourage curiosity; it embraces it. Each day we make progress together by showing up as our authentic selves. We show up with a learn-it-all mentality. We show up cheering on others, knowing their success doesn't diminish our own. We show up every day open to learning our own biases, changing our behavior, and inviting in differences. Because impact matters. Microsoft operates in 190 countries and is made up of approximately 228,000 passionate employees worldwide.",
+    "Company Speciality": "Business Software, Developer Tools, Home & Educational Software, Tablets, Search, Advertising, Servers, Windows Operating System, Windows Applications & Platforms, Smartphones, Cloud Computing, Quantum Computing, Future of Work, Productivity, AI, Artificial Intelligence, Machine Learning, Laptops, Mixed Reality, Virtual Reality, Gaming, Developers, and IT Professional",
+    "Company Industry": "Software Development",
+    "Company Size": "10,001+ employees",
+    "Company Funding": {
+      "last_round_date": "2023-01-09T00:00:00.000Z",
+      "last_round_type": "Post IPO equity",
+      "rounds": 2
+    },
+    "News Coverage": [
+      {
+        "headline": "The 10 Biggest Microsoft News Stories Of 2025 (So Far)",
+        "summary": "Microsoft's news in 2025 has highlighted significant advancements in AI innovation, security challenges, and new incentives for partners. The company continues to lead in technology while addressing vulnerabilities and enhancing its offerings."
+      },
+      {
+        "headline": "Microsoft and FFA help students use smart sensors and AI to learn about the future of farming and technology.",
+        "summary": "On May 6, 2025, Microsoft partnered with the Future Farmers of America (FFA) to empower students with smart sensors and AI technology, fostering a new generation of innovators in agriculture and technology."
+      },
+      {
+        "headline": "Join Microsoft at IBC Sept. 9-13 to explore the future of media and entertainment.",
+        "summary": "Microsoft is set to participate in the IBC event from September 9-13, 2025, showcasing its innovations in media and entertainment, and highlighting its commitment to transforming these industries through technology."
+      },
+      {
+        "headline": "Microsoft Patch Tuesday, September 2025 Edition",
+        "summary": "On September 9, 2025, Microsoft issued security updates addressing over 80 vulnerabilities in its Windows operating systems and software, reinforcing its commitment to cybersecurity and user safety."
+      },
+      {
+        "headline": "Informe de Sostenibilidad Ambiental de Microsoft 2025",
+        "summary": "Microsoft released its 2025 Environmental Sustainability Report, detailing progress made in fiscal year 2024, showcasing the company's commitment to sustainability and environmental responsibility."
+      }
+    ],
+    "Summary": "Microsoft, headquartered in Redmond, Washington, is a global leader in software development, with a mission to empower every person and organization to achieve more. The company operates in 190 countries and employs approximately 228,000 passionate individuals. Microsoft specializes in a wide range of products and services, including business software, developer tools, cloud computing, and artificial intelligence. Its commitment to innovation is evident in its recent partnerships and initiatives, such as collaborating with the Future Farmers of America (FFA) to integrate smart sensors and AI into agricultural education. This partnership aims to equip students with the necessary skills to navigate the future of farming and technology, reflecting Microsoft's dedication to fostering the next generation of innovators. In addition to its educational initiatives, Microsoft is actively involved in the media and entertainment sector, participating in the IBC event from September 9-13, 2025. This event will showcase Microsoft's advancements in these industries, emphasizing its role in transforming media experiences through technology. Furthermore, Microsoft has demonstrated its commitment to cybersecurity by issuing security updates on September 9, 2025, addressing over 80 vulnerabilities in its software and operating systems. This proactive approach underscores the company's focus on user safety and trust. Microsoft also released its 2025 Environmental Sustainability Report, which highlights the progress made in fiscal year 2024 towards sustainability goals. This report is a testament to Microsoft's ongoing efforts to minimize its environmental impact and promote responsible business practices. Overall, Microsoft's diverse portfolio, innovative partnerships, and commitment to sustainability and security position it as a leader in the technology sector, continually shaping the future of work and society."
+  }
+}

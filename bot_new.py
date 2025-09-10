@@ -277,6 +277,7 @@ EMAIL MEETING STYLE:
 - It should be a real email written by a human.
 - Confirm the meeting time and express that you are looking forward to it.
 - End by offering to answer any questions.
+- After confirming the meeting timing, end the email with " Please join with this link: abc-efg-hij". I am looking forward to meet you.
 - Do not add any extra details about the company or the meeting agenda.
 - Strictly,the ending of the email has to be an invitation for a meeting or a call to discuss the product in detail.
 - End the email with a professional sign-off like "Best regards,\nJack\nVera Solutions".
@@ -698,47 +699,6 @@ def generate_call_script(user_profile: str, company_profile: str, product_card: 
     })
 
 
-
-def _generate_call_script(user_profile: str, company_profile: str, product_card: str) -> dict:
-    """
-    Generates a Phone Call script for outreach.
-    """
-    parser = JsonOutputParser()
-
-    prompt = ChatPromptTemplate.from_template("""
-    You are a persuasive sales assistant.
-    Inputs:
-    - User profile: {user_profile}
-    - Company profile: {company_profile}
-    - Product information: {product_info}
-
-    Task: Create a PHONE CALL outreach script in JSON format:
-
-    {{
-      "Outreach Scripts": {{
-        "Phone Call": "<Script of 5-7 sentences guiding a conversation>"
-      }}
-    }}
-
-    RULES:
-    - Your name is Jack, You work in Vera Solutions.
-    - Start with a polite greeting and quick intro.
-    - The starting message has to be like "Hi ,Am i speaking to [Name]?, This is Jack from Vera Solutions."
-    - Mention company's recent updates or mission.
-    - Highlight the product's ROI quickly.
-    - Ask engaging questions to keep the conversation flowing.
-    - End with a proposal to schedule a follow-up/demo.
-    - Output MUST be valid JSON only.
-    """)
-
-    chain = prompt | llm | parser
-    return chain.invoke({
-        "user_profile": user_profile,
-        "company_profile": company_profile,
-        "product_info": product_card
-    })
-
-
 # --- Define the state structure ---
 class ConversationState(TypedDict):
     conversation_id: str
@@ -845,14 +805,17 @@ def summarize_node(state: dict) -> dict:
 
 
 def _save_calendar(calendar):
+    """
+    Saves the calendar dict to calendar.json."""
     print('saving calendar...')
     print(calendar)
     with open(CALENDAR_PATH, 'w') as f:
         json.dump(calendar, f, indent = 2)
 
-
-
 def _check_availablility(calendar, sch_response):
+    """
+    sch_response is the 
+    """
     msg_str = ""
     dt_avail = sch_response['date'] in calendar
     tm_avail = False

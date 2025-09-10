@@ -117,23 +117,26 @@ Goal: sound like a real person building trust and genuinely interested, not an a
 
 PRODUCT_CARD = """
 Features
-We specialize in B2B solutions that accelerate business performance across sales, operations, marketing, and outreach. By leveraging large data sets and building advanced intelligent systems, we help businesses streamline processes, expand globally, and operate with greater efficiency.
-By focusing on your unique needs, we deliver tailored solutions that go beyond simple automation. Our approach provides intelligent insights to improve your sales, marketing, and customer outreach efforts, helping your teams connect with the right audience through personalized solutions. We streamline your workflows, allowing your people to spend less time on routine tasks and more time driving impact and expanding your business on a global scale.
-By choosing VS, you gain access to a suite of key features designed to power your business to be faster, better, and smarter. We offer real-time support across sales, operations, and marketing, providing you with intelligent, data-driven insights to make smarter decisions and engage customers more effectively. Our scalable systems and streamlined workflows, handled by our dedicated tech workforce, are designed for global growth and are tailored to meet your unique business challenges and goals.
+At Vera Solutions, we empower B2B businesses to grow faster, better, and smarter by delivering advanced, intelligent solutions tailored to their unique challenges. Unlike companies that only focus on automating repetitive tasks, we go beyond — leveraging large data sets, intelligent systems, and real-time insights to streamline sales, operations, marketing, and outreach. Our solutions are designed to help businesses not only improve efficiency but also expand into new markets, generate high-quality leads, and connect with the right audiences on platforms such as LinkedIn and beyond.
+
+By focusing on your unique needs, we provide personalized solutions that deliver measurable impact. From sales growth and marketing optimization to customer outreach and global expansion, our solutions enable teams to spend less time on routine processes and more time on strategic innovation and business development. With scalable workflows, data-driven decision-making, and a dedicated tech workforce, we equip your business with the tools to compete and succeed at a global scale.
+
+At Vera Solutions, we don’t just deliver automation — we deliver transformation. Our solutions are built to accelerate business performance, improve outreach, and unlock new opportunities for growth. Whether you’re a small or medium enterprise looking to expand globally or a growing business seeking to scale smarter, Vera Solutions is your partner in driving impact, innovation, and long-term success. We power businesses to move faster, operate better, and perform smarter — helping you achieve your goals with confidence and efficiency.
+
 Benefits
-With VS, businesses can offload tedious processes and free up valuable time to focus on what matters most—closing deals, enhancing sales pitches, and offering better services to clients. Past clients have consistently highlighted how VS has helped them streamline operations, gain more leads, and ultimately improve their sales outcomes. Our solutions create additional bandwidth for teams to prioritize client engagement and long-term growth strategies.
+With Vera Solutions, businesses can offload tedious processes and free up valuable time to focus on what matters most—closing deals, enhancing sales pitches, and offering better services to clients. Past clients have consistently highlighted how Vera Solutions has helped them streamline operations, gain more leads, and ultimately improve their sales outcomes. Our solutions create additional bandwidth for teams to prioritize client engagement and long-term growth strategies.
 
 Pricing
 We offer a very reasonably priced package that has been proven to deliver results. For the first two months, you only pay when you get a confirmed sales call. During this period, the only costs incurred are the operational fees required to run the tech workers, which can be up to $300 depending on the scale of outreach you require.
 
 About the Company
-VS is a software company based in India and Hong Kong, with over 10 years of experience in data science and AI research. Our expertise enables us to deliver cutting-edge tools and services that accelerate business growth and help you achieve your business goals.
+Vera Solutions is a software company based in India and Hong Kong, with over 10 years of experience in data science and AI research. Our expertise enables us to deliver cutting-edge tools and services that accelerate business growth and help you achieve your business goals.
 
 Trending Offers
 If you sign up today, you will receive the first two weeks of work completely free, giving you the opportunity to experience the value of our services before committing further.
 
 Reviews
-Our clients have shared that VS tech workers make tedious processes not only easier but also more effective. By taking over repetitive tasks, our workers allow teams to focus on improving sales strategies and client interactions. Many businesses report that partnering with VS has directly resulted in increased efficiency, smarter workflows, and better client satisfaction.
+Our clients have shared that Vera Solutions tech workers make tedious processes not only easier but also more effective. By taking over repetitive tasks, our workers allow teams to focus on improving sales strategies and client interactions. Many businesses report that partnering with Vera Solutions has directly resulted in increased efficiency, smarter workflows, and better client satisfaction.
 
 """
 
