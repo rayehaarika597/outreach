@@ -804,7 +804,7 @@ def summarize_node(state: dict) -> dict:
     return state
 
 
-def _save_calendar(calendar):
+def save_calendar(calendar):
     """
     Saves the calendar dict to calendar.json."""
     print('saving calendar...')
@@ -812,51 +812,84 @@ def _save_calendar(calendar):
     with open(CALENDAR_PATH, 'w') as f:
         json.dump(calendar, f, indent = 2)
 
-def _check_availablility(calendar, sch_response):
+def check_availability(calendar, sch_response):
     """
-    sch_response is the 
+    calendar: Dictionary containing the calendar data structure
+    sch_response: Dictionary with user's scheduling request containing:
+    date: Requested date (format: 'YYYY-MM-DD')
+    time: Requested time slot
     """
-    msg_str = ""
-    dt_avail = sch_response['date'] in calendar
-    tm_avail = False
+    msg_str = "" # Message to return to user
+    dt_avail = sch_response['date'] in calendar # Is the date available?
+    tm_avail = False # Is the time slot available? It’ll become True if the requested time exists in that date’s slots.
     
+    # If the requested date exists:
+    # check whether the requested time is listed under that date’s available slots.
+    # Set tm_avail = True if it is.
     if dt_avail:
         tm_avail = sch_response['time'] in calendar[sch_response['date']]
     
+    # scene 1 - if date is not available 
+    # what happens here is
+    # Creates a message showing ALL available dates and times
+    # Filters out past dates (only shows today and future)
+    # Skips non-date keys like 'bookings' and 'reminders'
     if not dt_avail:
         available_dates = "Dates available are: \n"
         for key in calendar.keys():
-            if key != 'bookings' and key != 'reminders':  # Exclude non-date keys
-                try:
+            if key != 'bookings' and key != 'reminders':  # Skip keys that aren’t actual dates (bookings = scheduled meetings, reminders = reminders).
+                try: # Convert both the calendar date (key) and the requested date (sch_response['date']) into datetime objects so they can be compared.
                     dt = datetime.strptime(key, '%Y-%m-%d')
                     asked_dt = datetime.strptime(sch_response['date'], '%Y-%m-%d')
+                    #If the calendar date is today or later:Append that date to the message.List all available time slots for that date.
                     if dt >= asked_dt:  # Include today and future dates
                         available_dates += f"{key}:\n"
                         for time_slot in calendar[key]:
                             available_dates += f"  - {time_slot}\n"
                         available_dates += "\n"
+                #If a calendar key is not a proper date string, ignore it.
                 except ValueError:
                     continue  # Skip invalid date formats
-        msg_str = available_dates
-
+        msg_str = available_dates #Store the built string into msg_str so it can be returned.
+    
+    # scene 2- Date Available, But Time Slot Taken
+    # Shows only the available time slots for the requested date
+    # User requested a valid date but an unavailable time
     elif dt_avail and not tm_avail:
         available_slots = f"Slots available on {sch_response['date']} are:\n"
         for slot in calendar[sch_response['date']]:
             available_slots += f"  - {slot}\n"
         msg_str = available_slots
     
+    # if both date and time are available, msg_str remains empty
+
     return {
-        "avail_date": dt_avail,
-        "avail_time": tm_avail,
-        "message": msg_str
+        "avail_date": dt_avail, # Boolean: Is date available?
+        "avail_time": tm_avail,  # Boolean: Is time slot available?
+        "message": msg_str # String: message for user
     }
 
 
-def _scheduler(id, sch_response, communication_mode):
+def scheduler(id, sch_response, communication_mode):
+    """
+    Main scheduling engine that handles:
+    - New appointment bookings
+    - Rescheduling existing appointments
+    - Setting up reminders
+    Parameters:
+    - id: Unique identifier for the user
+    - sch_response: Dictionary with parsed scheduling details
+    - communication_mode: 'email', 'whatsapp', or 'call'
+    """
+     
     print('Scheduling the event...')
     print(sch_response)
-    
-    calendar = load_calendar()
+
+    calendar = load_calendar() #load the calendar.json file
+
+    # Type 1 : reminder 
+
+    # If a "reminder" list already exists in calendar, append new reminder
     if sch_response['action'].lower() == 'reminder':
         if 'reminder' in calendar:
             calendar['reminder'].append({
@@ -867,38 +900,40 @@ def _scheduler(id, sch_response, communication_mode):
             })
         
         else:
-            calendar['remainder'] = [{
+            # If no "reminder" key exists, create one with the new reminder.
+            calendar['reminder'] = [{
                 "id": id,
                 "date": sch_response['date'],
                 "time": sch_response['time'],
                 "type": communication_mode
             }]
-    
-        _save_calendar(calendar)
+
+        # Save the updated calendar, return success response.
+        save_calendar(calendar)
         return {
                 "success": True,
                 "message": f"Reminder Scheduled at {sch_response['date']} {sch_response['time']}"
             }
     
-    
+    # Type 2: schedule 
+
     if sch_response['intent'].lower() == 'schedule':
-        avail_msg = _check_availablility(calendar, sch_response)
+        # Call check_availability to confirm requested date/time exists.
+        # is_available = True only if both date and time are free.
+        avail_msg = check_availability(calendar, sch_response)
         is_available = True if avail_msg['avail_date'] and avail_msg['avail_time'] else False
 
-        # if sch_response['date'] in calendar:
-        #     schedules = calendar[sch_response['date']]
-        #     for sch in schedules:
-        #         if sch.lower() == sch_response['time'].lower():  # Added .lower() for case-insensitive comparison
-        #             is_available = True
-        #             schedules.remove(sch)
-        #             break  # Added break to exit loop once found
-        
+        # If available:
+        # Log it.
+        # Ensure bookings list exists.
         if is_available:
             print('booking the date...')
             # Initialize bookings list if it doesn't exist
             if 'bookings' not in calendar:
                 calendar['bookings'] = []
             
+            # Add the booking to bookings.
+            # Remove that time slot from the date’s available slots (since it’s now booked).
             calendar['bookings'].append({
                 "id": id,
                 "date": sch_response['date'],
@@ -906,34 +941,39 @@ def _scheduler(id, sch_response, communication_mode):
                 "type": sch_response['action']
             })
             calendar[sch_response['date']].remove(sch_response['time'])
-
-            _save_calendar(calendar)
+            
+            # Save the updated calendar
+            save_calendar(calendar)
             return {
                 "success": True,
                 "message": f"Booking Scheduled at {sch_response['date']} {sch_response['time']}"
             }
-        
-        
-        
+        # If date/time not available, return failure message plus alternate date and time suggestions (from check_availability)
         return {
             "success": False,
             "message": f"Meeting not scheduled.\n {avail_msg['message']}"
         }
     
+    # Type 3: reschedule
+
     if sch_response['intent'].lower() == 'reschedule':  # Fixed typo: 'reschule' -> 'reschedule'
         # Check if the new time slot is available
-        avail = _check_availablility(calendar, sch_response)
+        avail = check_availability(calendar, sch_response)
         print("Availability check result:", avail)
         
         if avail['avail_date'] and avail['avail_time']:
-            # Find and remove the existing booking
+            # If available:
+            # Prepare two lists (old_bookings and updated_bookings).
+            # Make sure bookings list exists.
             old_bookings = []
             updated_bookings = []
-            
             # Initialize bookings list if it doesn't exist
             if 'bookings' not in calendar:
                 calendar['bookings'] = []
-            
+                
+            # Loop through existing bookings:
+            # If booking matches current ID -> save its old date/time.
+            # Otherwise keep it in updated list.
             for booking in calendar['bookings']:
                 if booking['id'] == id:
                     old_bookings.append({
@@ -946,7 +986,7 @@ def _scheduler(id, sch_response, communication_mode):
             # Update the bookings list (remove old booking)
             calendar['bookings'] = updated_bookings
             
-            # Add the new booking
+            # Add the new booking with updated date/time
             calendar['bookings'].append({
                 "id": id,
                 "date": sch_response['date'],
@@ -958,7 +998,7 @@ def _scheduler(id, sch_response, communication_mode):
             if sch_response['date'] in calendar and sch_response['time'] in calendar[sch_response['date']]:
                 calendar[sch_response['date']].remove(sch_response['time'])
             
-            # Add the old time slots back to available slots
+            # Add the old time slots back to available slots since it is free now
             for old_slot in old_bookings:
                 if old_slot['date'] in calendar:
                     if old_slot['time'] not in calendar[old_slot['date']]:  # Avoid duplicates
@@ -966,32 +1006,33 @@ def _scheduler(id, sch_response, communication_mode):
                 else:
                     calendar[old_slot['date']] = [old_slot['time']]
             
-            _save_calendar(calendar)
+            save_calendar(calendar)
             return {
                 "success": True,
                 "message": f"Rescheduling successful for {sch_response['date']} {sch_response['time']}"
             }
         
         else:
+            # If new time wasn’t available, fail and show alternate date and time suggestions.
             return {
                 "success": False,
                 "message": f"Meeting not rescheduled.\n {avail['message']}"
             }
-    
+    # If intent/action doesn’t match reminder/schedule/reschedule , return error.
     return {
         "success": False,
         "message": "Invalid Input Please Retry"
     }
 
 
-def _cancel_event(id, sch_response):
+def cancel_event(id, sch_response):
     try:
         calendar = load_calendar()
         for booking in calendar['bookings']:
             if booking['id'] == id:
                 if booking['date'] == sch_response['date'] and booking['time'] == sch_response['time']:
                     calendar['bookings'].remove(booking)
-                    _save_calendar(calendar)
+                    save_calendar(calendar)
                     calendar[sch_response['date']].append(sch_response['time'])
                     break
         
@@ -1000,7 +1041,7 @@ def _cancel_event(id, sch_response):
             "message": "Event cancelled successfully"
         }
     except Exception as e:
-        print(e)
+        print(e) 
         return {
             "success": False,
             "message": "Cancellation Failed"
@@ -1046,7 +1087,7 @@ def detect_and_schedule_node(state: dict) -> dict:
     if sch_response:
         # Fixed typo: 'reschule' -> 'reschedule'
         if sch_response['intent'].lower() == 'schedule' or sch_response['intent'].lower() == 'reschedule':
-            sch_resp = _scheduler(state['conversation_id'], sch_response, state['communication_mode'])
+            sch_resp = scheduler(state['conversation_id'], sch_response, state['communication_mode'])
             state['log'].append(
                 {
                     "id": state['conversation_id'],
@@ -1058,7 +1099,7 @@ def detect_and_schedule_node(state: dict) -> dict:
             )
         
         if sch_response['intent'].lower() == 'cancel':
-            cancel_resp = _cancel_event(state['conversation_id'], sch_response)
+            cancel_resp = cancel_event(state['conversation_id'], sch_response)
             c = 0
             while c < 5:
                 if cancel_resp['success']:
@@ -1074,7 +1115,7 @@ def detect_and_schedule_node(state: dict) -> dict:
                     c = 6
                 else:
                     print('Retrying...')
-                    cancel_resp = _cancel_event(state['conversation_id'], sch_response)
+                    cancel_resp = cancel_event(state['conversation_id'], sch_response)
                     c += 1
             
             if not cancel_resp['success']:
